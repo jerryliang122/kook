@@ -1,0 +1,59 @@
+name: Build Docker Image and push to hub
+
+
+on:
+  push:
+    branches:
+      - main
+
+# 定义环境变量, 后面会使用
+# 定义 APP_NAME 用于 docker build-args
+# 定义 DOCKERHUB_REPO 标记 docker hub repo 名称
+env:
+  APP_NAME: kook
+  DOCKERHUB_REPO: jerryliang/kook
+
+jobs:
+  main:
+    # 在 Ubuntu 上运行
+    runs-on: ubuntu-latest
+    steps:
+      # git checkout 代码
+      - name: Checkout
+        uses: actions/checkout@v2
+        
+      - name: Update submodules
+        run: |
+          git submodule update --init --recursive
+      # 设置 QEMU, 后面 docker buildx 依赖此.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      # 设置 Docker buildx, 方便构建 Multi platform 镜像
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      # 登录 docker hub
+      - name: Login to DockerHub
+        uses: docker/login-action@master
+        with:
+          # GitHub Repo => Settings => Secrets 增加 docker hub 登录密钥信息
+          # DOCKERHUB_USERNAME 是 docker hub 账号名.
+          # DOCKERHUB_TOKEN: docker hub => Account Setting => Security 创建.
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # 构建 Docker 并推送到 Docker hub
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v4
+        with:
+          # 是否 docker push
+          push: false
+          # 生成多平台镜像, see https://github.com/docker-library/bashbrew/blob/v0.1.1/architecture/oci-platform.go
+          platforms: |
+            linux/amd64
+            linux/arm64/v8
+          # docker build arg, 注入 APP_NAME/APP_VERSION
+          build-args: |
+            APP_NAME=${{ env.APP_NAME }}
+          # 生成两个 docker tag: ${APP_VERSION} 和 latest
+          tags: |
+            ${{ env.DOCKERHUB_REPO }}:latest
