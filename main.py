@@ -5,26 +5,15 @@ from khl.card import CardMessage, Card, Module, Element, Types, Struct
 from chatglm import chatGLM_Primitive
 
 
-# 初始化程序
-def init_pg():
-    global config
-    # 检查当前目录下是否含有config.json文件
-    if os.path.exists("config.json"):
-        # 如果有，则读取文件
-        with open("config.json", "r") as f:
-            config = json.load(f)
-    else:
-        # 如果没有，则创建文件
-        config = {"bot": ""}
-        with open("config.json", "w") as f:
-            json.dump(config, f)
-
+# 获取bot的环境变量
+config = os.environ.get("bot")
 
 # 加载bot token
-bot = Bot(token=config["bot"])
+bot = Bot(token=config)
 chatGLM = None
 channel = None
 history = []
+activation = {}
 
 
 # 获取帮助
@@ -50,8 +39,11 @@ async def help(msg: Message):
 async def chatGLM_Primitive(msg: Message):
     global chatGLM
     global channel
+    global activation
     chatGLM = "Primitive"
     channel = msg.ctx.channel.id
+    # 如果激活了chatGLM_Primitive，写入激活列表
+    activation.update({msg.ctx.channel.id: "chatGLM_Primitive"})
     await msg.ctx.channel.send("已经激活chatGLM_Primitive")
 
 
@@ -79,19 +71,16 @@ async def message(msg: Message):
     # 如果消息是以/开头
     if msg.content.startswith("/"):
         return
-    # 如果没有激活频道和chatGLM
-    if channel is None and chatGLM is None:
-        return
     # 如果激活的频道和消息的频道不一致
-    if msg.target_id != msg.ctx.channel.id:
+    if not msg.ctx.channel.id in activation.keys():
         return
     # 获取原始GLM的回复
-    if chatGLM == "Primitive":
+    if activation[msg.ctx.channel.id] == "chatGLM_Primitive":
         # 构建json请求头
         data = {"prompt": msg.content, "history": history}
         resp = chatGLM_Primitive(data)
         # 将回复和问题组成元组
-        history.append((msg.content, resp))
+    # history.append((msg.content, resp))
     # 获取微调后的GLM的回复
     elif chatGLM == "Fine_tuning":
         # 构建json请求头
@@ -101,3 +90,7 @@ async def message(msg: Message):
         history.append((msg.content, resp))
     # 发送回复
     await msg.ctx.channel.send(resp)
+
+
+# 运行bot
+bot.run()

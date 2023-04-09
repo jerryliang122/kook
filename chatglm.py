@@ -1,10 +1,14 @@
 import aiohttp
+import os
+
+# chatGLM的原始版本API的环境变量
+chatGLM_Primitive_URL = os.environ.get("chatGLM_Primitive_URL")
 
 
 # chatGLM的原始版本API
 def chatGLM_Primitive(text):
     # 请在这里填入你的API地址
-    url = "https://api.ainize.ai/chatbot/chatGLM"
+    url = "chatGLM_Primitive_URL"
     data = text
     headers = {"Content-Type": "application/json"}
     async with aiohttp.ClientSession() as session:
