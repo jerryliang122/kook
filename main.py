@@ -39,7 +39,7 @@ async def help(msg: Message):
 
 # 启用chatGLM_Primitive
 @bot.command(name="chatGLM_Primitive")
-async def chatGLM_Primitive(msg: Message):
+async def chatGLM_Primitive_activity(msg: Message):
     global chatGLM
     global channel
     global activation
