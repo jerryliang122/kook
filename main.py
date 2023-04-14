@@ -90,9 +90,9 @@ async def message(msg: Message):
         data = {"prompt": msg.content, "history": history}
         resp = chatGLM_Primitive(data)
         # 将回复和问题组成元组
-        history.append([msg.content, resp])
+        history.append([msg.content, resp[1]])
     # 发送回复
-    await msg.reply(resp)
+    await msg.ctx.channel.send(resp[0])
 
 
 # 运行bot
