@@ -6,12 +6,12 @@ chatGLM_Primitive_URL = os.environ.get("chatGLM_Primitive_URL")
 
 
 # chatGLM的原始版本API
-def chatGLM_Primitive(text):
+async def chatGLM_Primitive(text):
     # 请在这里填入你的API地址
-    url = "chatGLM_Primitive_URL"
+    url = chatGLM_Primitive_URL
     data = text
     headers = {"Content-Type": "application/json"}
     async with aiohttp.ClientSession() as session:
         async with session.post(url, json=data, headers=headers) as resp:
             resp_data = resp.json()
-            return resp_data["text"]
+            return resp_data["prompt"], resp_data["history"]

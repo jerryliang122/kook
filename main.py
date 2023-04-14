@@ -85,9 +85,9 @@ async def message(msg: Message):
     elif chatGLM == "Fine_tuning":
         # 构建json请求头
         data = {"prompt": msg.content, "history": history}
-        resp = chatGLM_Fine_tuning(data)
+        resp = chatGLM_Primitive(data)
         # 将回复和问题组成元组
-        history.append((msg.content, resp))
+        history.append([msg.content, resp])
     # 发送回复
     await msg.ctx.channel.send(resp)
 
