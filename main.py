@@ -92,7 +92,7 @@ async def message(msg: Message):
         # 将回复和问题组成元组
         history.append([msg.content, resp])
     # 发送回复
-    await msg.ctx.channel.send(resp)
+    await msg.reply(resp)
 
 
 # 运行bot
