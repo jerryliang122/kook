@@ -15,6 +15,13 @@ channel = None
 history = []
 activation = {}
 
+# 帮助示例
+helps = """
+使用/clean清除曾经的历史消息\n
+使用/chatGLM_Primitive在该频道启用chatGLM。\n
+使用/chatGLM_Fine_tuning在该频道里启用微调后的ChatGLM。
+"""
+
 
 # 获取帮助
 @bot.command(name="帮助")
@@ -24,11 +31,7 @@ async def help(msg: Message):
             Card(
                 Module.Header("闲聊机器人的帮助小直男"),
                 Module.Context("♂"),
-                Module.Section(
-                    "使用/chatGLM_Primitive在该频道启用chatGLM。",
-                    "使用/clean清除曾经的历史消息",
-                    "使用/chatGLM_Fine_tuning在该频道里启用微调后的ChatGLM",
-                ),
+                Module.Section(helps),
             )
         )
     )
