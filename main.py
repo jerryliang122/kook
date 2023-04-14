@@ -81,7 +81,7 @@ async def message(msg: Message):
     if activation[msg.ctx.channel.id] == "chatGLM_Primitive":
         # 构建json请求头
         data = {"prompt": msg.content, "history": history}
-        resp = chatGLM_Primitive(data)
+        resp = await chatGLM_Primitive(data)
         # 将回复和问题组成元组
     # history.append((msg.content, resp))
     # 获取微调后的GLM的回复
@@ -89,8 +89,8 @@ async def message(msg: Message):
         # 构建json请求头
         data = {"prompt": msg.content, "history": history}
         resp = await chatGLM_Primitive(data)
-        # 将回复和问题组成元组
-        history.append([msg.content, resp[1]])
+    # 将回复和问题组成元组
+    history.append([msg.content, resp[1]])
     # 发送回复
     await msg.ctx.channel.send(resp[0])
 
