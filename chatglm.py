@@ -13,5 +13,5 @@ async def chatGLM_Primitive(text):
     headers = {"Content-Type": "application/json"}
     async with aiohttp.ClientSession() as session:
         async with session.post(url, json=data, headers=headers) as resp:
-            resp_data = resp.json()
+            resp_data = await resp.json()
             return resp_data["response"], resp_data["history"]
