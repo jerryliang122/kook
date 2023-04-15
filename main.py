@@ -7,7 +7,6 @@ from chatglm import chatGLM_Primitive
 
 # 获取bot的环境变量
 config = os.environ.get("bot")
-
 # 加载bot token
 bot = Bot(token=config)
 chatGLM = None
