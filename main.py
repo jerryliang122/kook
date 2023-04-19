@@ -70,6 +70,7 @@ async def chatGLM_Fine_tuning(msg: Message):
 # 监听消息
 @bot.on_message()
 async def message(msg: Message):
+    global history
     # 如果消息是以/开头
     if msg.content.startswith("/"):
         return
@@ -89,7 +90,7 @@ async def message(msg: Message):
         data = {"prompt": msg.content, "history": history}
         resp = await chatGLM_Primitive(data)
     # 将回复和问题组成元组
-    history.append([msg.content, resp[1]])
+    history = resp[1]
     # 发送回复
     await msg.ctx.channel.send(resp[0])
 
