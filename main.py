@@ -59,7 +59,7 @@ async def clean(msg: Message):
 
 # 启用chatGLM_Fine_tuning
 @bot.command(name="chatGLM_Fine_tuning")
-async def chatGLM_Fine_tuning(msg: Message):
+async def chatGLM_Fine_tuning_activity(msg: Message):
     global chatGLM
     global channel
     chatGLM = "Fine_tuning"
