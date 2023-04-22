@@ -36,7 +36,8 @@ async def timer(msg: Message):
     while not stop_event.is_set():
         time_since_last_access = (datetime.datetime.now() - last_access_time).total_seconds()
         if time_since_last_access > TIMEOUT:
-            await bot.client.send(target=channel_id, content="长时间未访问AI，已关闭，激活请使用/help查看指令")
+            ch = await bot.client.fetch_public_channel(channel_id)
+            await ch.send("长时间未访问AI，已关闭，激活请使用/help查看指令")
             channel_id = None
             activity = None
             history = []
