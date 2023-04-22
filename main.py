@@ -13,6 +13,7 @@ config = os.environ.get("bot")
 bot = Bot(token=config)
 activity = None
 last_access_time = None
+channel_id = None
 history = []
 time_activity = False
 # 创建一个 asyncio.Event 对象
@@ -100,7 +101,7 @@ async def stop(msg: Message):
 # 监听频道
 @bot.on_message()
 async def chat(msg: Message):
-    global history
+    global history, time_activity
     # 判断是否是指令
     if msg.content.startswith("/"):
         return
