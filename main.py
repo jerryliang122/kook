@@ -35,10 +35,10 @@ async def timer(msg: Message):
     while not stop_event.is_set():
         time_since_last_access = (datetime.datetime.now() - last_access_time).total_seconds()
         if time_since_last_access > TIMEOUT:
+            await msg.ctx.channel.send("长时间未访问AI，已关闭，激活请使用/帮助查看指令")
             channel_id = None
             activity = None
             history = []
-            await msg.ctx.channel.send("长时间未访问AI，已关闭，激活请使用/帮助查看指令")
             break
         await asyncio.sleep(5)
 
