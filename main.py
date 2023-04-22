@@ -4,13 +4,20 @@ from khl import Bot, Message, MessageTypes
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
 from chatglm import chatGLM_Primitive, stable_diffusion
 import io
+import asyncio
+import datetime
 
 # 获取bot的环境变量
 config = os.environ.get("bot")
 # 加载bot token
 bot = Bot(token=config)
 activity = None
+last_access_time = None
 history = []
+# 创建一个 asyncio.Event 对象
+stop_event = asyncio.Event()
+# 定义一个时间间隔，表示多长时间没有访问后自动关闭
+TIMEOUT = 5 * 60  # 5 分钟
 # 帮助示例
 helps = """
 使用/clean清除曾经的历史消息\n
@@ -20,6 +27,20 @@ helps = """
 使用/stable-diffusion 在该频道里启用AI绘画\n
 注意AI 绘画只支持英文，且不支持中文字符\n
 """
+
+
+# 配置一个定时器,当长时间没有人发送消息后删除频道ID 并且在该频道中发送消息
+async def timer(msg: Message):
+    global channel_id, activity, history
+    while not stop_event.is_set():
+        time_since_last_access = (datetime.datetime.now() - last_access_time).total_seconds()
+        if time_since_last_access > TIMEOUT:
+            channel_id = None
+            activity = None
+            history = []
+            await msg.ctx.channel.send("长时间未访问AI，已关闭，激活请使用/帮助查看指令")
+            break
+        await asyncio.sleep(5)
 
 
 # 获取帮助
@@ -84,6 +105,8 @@ async def chat(msg: Message):
     if not msg.ctx.channel.id == channel_id:
         return
     # 判断激活的是哪个模型
+    global last_access_time
+    last_access_time = datetime.datetime.now()
     if activity == "chatGLM_Primitive":
         # 获取回复
         data = {"prompt": msg.content, "history": history}
