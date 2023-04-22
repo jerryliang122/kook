@@ -14,6 +14,7 @@ bot = Bot(token=config)
 activity = None
 last_access_time = None
 history = []
+time_activity = False
 # 创建一个 asyncio.Event 对象
 stop_event = asyncio.Event()
 # 定义一个时间间隔，表示多长时间没有访问后自动关闭
@@ -35,16 +36,17 @@ async def timer(msg: Message):
     while not stop_event.is_set():
         time_since_last_access = (datetime.datetime.now() - last_access_time).total_seconds()
         if time_since_last_access > TIMEOUT:
-            await msg.ctx.channel.send("长时间未访问AI，已关闭，激活请使用/帮助查看指令")
+            await bot.client.send(target=channel_id, content="长时间未访问AI，已关闭，激活请使用/help查看指令")
             channel_id = None
             activity = None
             history = []
+            time_activity = False
             break
         await asyncio.sleep(5)
 
 
 # 获取帮助
-@bot.command(name="帮助")
+@bot.command(name="help")
 async def help(msg: Message):
     await msg.ctx.channel.send(
         CardMessage(
@@ -104,6 +106,10 @@ async def chat(msg: Message):
     # 判断是否为启用chatGLM的频道
     if not msg.ctx.channel.id == channel_id:
         return
+    if not time_activity:
+        # 启动定时器
+        asyncio.create_task(timer(msg))
+        time_activity = True
     # 判断激活的是哪个模型
     global last_access_time
     last_access_time = datetime.datetime.now()
