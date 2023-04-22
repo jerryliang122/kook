@@ -66,7 +66,8 @@ async def stable_diffusion_start(msg: Message):
 # 关闭频道channel_id
 @bot.command(name="stop")
 async def stop(msg: Message):
-    global channel_id, activity
+    global channel_id, activity, history
+    history = []
     activity = None
     channel_id = None
     await msg.ctx.channel.send("已关闭频道")
