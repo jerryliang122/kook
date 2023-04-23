@@ -25,7 +25,7 @@ helps = """
 使用/clean清除曾经的历史消息\n
 使用/stop删除AI在这个频道的活动\n
 使用/chatGLM_Primitive在该频道启用chatGLM。\n
-使用/chatGLM_Fine_tuning在该频道里启用微调后的ChatGLM。不适用
+使用/moss在该频道启用MOSS\n
 使用/stable-diffusion 在该频道里启用AI绘画\n
 注意AI 绘画只支持英文，且不支持中文字符\n
 """
@@ -67,6 +67,15 @@ async def clean(msg: Message):
     global history
     history = []
     await msg.ctx.channel.send("历史消息已清除")
+
+
+# 启动moss
+@bot.command(name="moss")
+async def moss(msg: Message):
+    global channel_id, activity
+    activity = "moss"
+    channel_id = msg.ctx.channel.id
+    await msg.ctx.channel.send("已启用moss")
 
 
 # 启用chatGLM
@@ -137,6 +146,12 @@ async def chat(msg: Message):
         # 上传到开黑啦
         img_url = await bot.client.create_asset(img)
         await msg.ctx.channel.send(img_url, type=MessageTypes.IMG)
+    if activity == "moss":
+        # 获取回复
+        data = {"prompt": msg.content, "history": []}
+        reply = await moss(data)
+        # 发送回复
+        await msg.ctx.channel.send(reply)
 
 
 # 运行bot
