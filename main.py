@@ -33,7 +33,7 @@ helps = """
 
 # 配置一个定时器,当长时间没有人发送消息后删除频道ID 并且在该频道中发送消息
 async def timer(msg: Message):
-    global channel_id, activity, history
+    global channel_id, activity, history, time_activity
     while not stop_event.is_set():
         time_since_last_access = (datetime.datetime.now() - last_access_time).total_seconds()
         if time_since_last_access > TIMEOUT:
