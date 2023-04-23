@@ -35,7 +35,7 @@ async def stable_diffusion(text):
 
 
 # moss的API
-async def chatGLM_Primitive(text):
+async def moss(text):
     # 请在这里填入你的API地址
     url = moss_URL
     data = text

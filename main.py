@@ -2,7 +2,7 @@ import json
 import os
 from khl import Bot, Message, MessageTypes
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
-from chatglm import chatGLM_Primitive, stable_diffusion
+from chatglm import chatGLM_Primitive, stable_diffusion ,moss
 import io
 import asyncio
 import datetime
@@ -71,7 +71,7 @@ async def clean(msg: Message):
 
 # 启动moss
 @bot.command(name="moss")
-async def moss(msg: Message):
+async def moss_start(msg: Message):
     global channel_id, activity
     activity = "moss"
     channel_id = msg.ctx.channel.id
