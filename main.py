@@ -2,7 +2,7 @@ import json
 import os
 from khl import Bot, Message, MessageTypes
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
-from chatglm import chatGLM_Primitive, stable_diffusion ,moss
+from chatglm import chatGLM_Primitive, stable_diffusion, moss, chatglm_lora
 import io
 import asyncio
 import datetime
@@ -24,7 +24,8 @@ TIMEOUT = 5 * 60  # 5 分钟
 helps = """
 使用/clean清除曾经的历史消息\n
 使用/stop删除AI在这个频道的活动\n
-使用/chatGLM_Primitive在该频道启用chatGLM。\n
+使用/chatglm在该频道启用chatGLM。\n
+使用/chatglm-l在该频道启用chatGLM微调版。\n
 使用/moss在该频道启用MOSS\n
 使用/stable-diffusion 在该频道里启用AI绘画\n
 注意AI 绘画只支持英文，且不支持中文字符\n
@@ -79,13 +80,23 @@ async def moss_start(msg: Message):
 
 
 # 启用chatGLM
-@bot.command(name="chatGLM_Primitive")
+@bot.command(name="chatglm")
 async def chatGLM_Primitive_start(msg: Message):
     # 获取频道id
     global channel_id, activity
-    activity = "chatGLM_Primitive"
+    activity = "chatglm"
     channel_id = msg.ctx.channel.id
-    await msg.ctx.channel.send("已启用chatGLM_Primitive")
+    await msg.ctx.channel.send("已启用chatGLM_原始")
+
+
+# 启动chatglm_lora
+@bot.command(name="chatglm-l")
+async def chatGLM_lora_start(msg: Message):
+    # 获取频道id
+    global channel_id, activity
+    activity = "chatglm-l"
+    channel_id = msg.ctx.channel.id
+    await msg.ctx.channel.send("已启用chatGLM_微调")
 
 
 # 启用stable-diffusion
@@ -124,7 +135,7 @@ async def chat(msg: Message):
     # 判断激活的是哪个模型
     global last_access_time
     last_access_time = datetime.datetime.now()
-    if activity == "chatGLM_Primitive":
+    if activity == "chatglm":
         # 获取回复
         data = {"prompt": msg.content, "history": history}
         reply = await chatGLM_Primitive(data)
@@ -152,6 +163,14 @@ async def chat(msg: Message):
         reply = await moss(data)
         # 发送回复
         await msg.ctx.channel.send(reply)
+    if activity == "chatglm-l":
+        # 获取回复
+        data = {"prompt": msg.content, "history": history}
+        reply = await chatglm_lora(data)
+        # 存档history
+        history = reply[1]
+        # 发送回复
+        await msg.ctx.channel.send(reply[0])
 
 
 # 运行bot
