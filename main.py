@@ -6,6 +6,7 @@ from chatglm import chatGLM_Primitive, stable_diffusion, moss, chatglm_lora
 import io
 import asyncio
 import datetime
+import base64
 
 # 获取bot的环境变量
 config = os.environ.get("bot")
@@ -143,26 +144,30 @@ async def chat(msg: Message):
         history = reply[1]
         # 发送回复
         await msg.ctx.channel.send(reply[0])
+        return
     if activity == "stable-diffusion":
         # 获取回复
         data = {"prompt": msg.content, "history": []}
         reply = await stable_diffusion(data)
-        import base64
-
+        if reply[1] == 502:
+            await msg.ctx.channel.send(reply[0])
+            return
         # 还原为图片
-        img = base64.b64decode(reply)
+        img = base64.b64decode(reply[0])
         # 把还原的图片放置在IO内存空间中
         img = io.BytesIO(img)
         img.seek(0)
         # 上传到开黑啦
         img_url = await bot.client.create_asset(img)
         await msg.ctx.channel.send(img_url, type=MessageTypes.IMG)
+        return
     if activity == "moss":
         # 获取回复
         data = {"prompt": msg.content, "history": []}
-        reply = await moss(data)
+        # reply = await moss(data)
         # 发送回复
-        await msg.ctx.channel.send(reply)
+        await msg.ctx.channel.send("moss暂时不可用")
+        return
     if activity == "chatglm-l":
         # 获取回复
         data = {"prompt": msg.content, "history": history}
@@ -171,6 +176,7 @@ async def chat(msg: Message):
         history = reply[1]
         # 发送回复
         await msg.ctx.channel.send(reply[0])
+        return
 
 
 # 运行bot

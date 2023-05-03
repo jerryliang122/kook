@@ -30,10 +30,14 @@ async def stable_diffusion(text):
     data = text
     headers = {"Content-Type": "application/json"}
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=data, headers=headers) as resp:
-            # 获取返回的base64图片
-            resp_data = await resp.json()
-            return resp_data["image"]
+        try:
+            async with session.post(url, json=data, headers=headers) as resp:
+                # 获取返回的base64图片
+                resp_data = await resp.json()
+                return (resp_data["image"], 200)
+        except aiohttp.ClientResponseError as e:
+            if e.status == 502:
+                return ("后端API服务器出现错误，请稍后再试", 502)
 
 
 # moss的API
@@ -43,9 +47,13 @@ async def moss(text):
     data = text
     headers = {"Content-Type": "application/json"}
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=data, headers=headers) as resp:
-            resp_data = await resp.json()
-            return (resp_data["response"], resp_data["history"])
+        try:
+            async with session.post(url, json=data, headers=headers) as resp:
+                resp_data = await resp.json()
+                return (resp_data["response"], resp_data["history"])
+        except aiohttp.ClientResponseError as e:
+            if e.status == 502:
+                return ("后端API服务器出现错误，请稍后再试", "")
 
 
 # clatglm_Lora的API
@@ -55,6 +63,10 @@ async def chatglm_lora(text):
     data = text
     headers = {"Content-Type": "application/json"}
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=data, headers=headers) as resp:
-            resp_data = await resp.json()
-            return (resp_data["response"], resp_data["history"])
+        try:
+            async with session.post(url, json=data, headers=headers) as resp:
+                resp_data = await resp.json()
+                return (resp_data["response"], resp_data["history"])
+        except aiohttp.ClientResponseError as e:
+            if e.status == 502:
+                return ("后端API服务器出现错误，请稍后再试", "")
