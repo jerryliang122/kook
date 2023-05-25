@@ -2,7 +2,7 @@ import json
 import os
 from khl import Bot, Message, MessageTypes
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
-from chatglm import chatGLM_Primitive, stable_diffusion, moss, chatglm_lora
+from chatglm import chatgpt
 import io
 import asyncio
 import datetime
@@ -23,29 +23,26 @@ stop_event = asyncio.Event()
 TIMEOUT = 5 * 60  # 5 分钟
 # 帮助示例
 helps = """
-使用/clean清除曾经的历史消息\n
+使用/chat开始对话\n
 使用/stop删除AI在这个频道的活动\n
-使用/chatglm在该频道启用chatGLM。\n
-使用/chatglm-l在该频道启用chatGLM微调版。\n
-使用/moss在该频道启用MOSS\n
-使用/stable-diffusion 在该频道里启用AI绘画\n
 注意AI 绘画只支持英文，且不支持中文字符\n
 """
 
 
 # 配置一个定时器,当长时间没有人发送消息后删除频道ID 并且在该频道中发送消息
 async def timer(msg: Message):
-    global channel_id, activity, history, time_activity
+    global channel_id, activity, history, time_activity, last_access_time
     while not stop_event.is_set():
-        time_since_last_access = (datetime.datetime.now() - last_access_time).total_seconds()
-        if time_since_last_access > TIMEOUT:
-            ch = await bot.client.fetch_public_channel(channel_id)
-            await ch.send("长时间未访问AI，已关闭，激活请使用/help查看指令")
-            channel_id = None
-            activity = None
-            history = []
-            time_activity = False
-            break
+        if last_access_time is not None:
+            time_since_last_access = (datetime.datetime.now() - last_access_time).total_seconds()
+            if time_since_last_access > TIMEOUT:
+                ch = await bot.client.fetch_public_channel(channel_id)
+                await ch.send("长时间未访问AI，已关闭，激活请使用/help查看指令")
+                channel_id = None
+                activity = None
+                history = []
+                time_activity = False
+                break
         await asyncio.sleep(5)
 
 
@@ -63,51 +60,13 @@ async def help(msg: Message):
     )
 
 
-# 清除历史消息
-@bot.command(name="clean")
-async def clean(msg: Message):
-    global history
-    history = []
-    await msg.ctx.channel.send("历史消息已清除")
-
-
-# 启动moss
-@bot.command(name="moss")
-async def moss_start(msg: Message):
-    global channel_id, activity
-    activity = "moss"
-    channel_id = msg.ctx.channel.id
-    await msg.ctx.channel.send("已启用moss")
-
-
-# 启用chatGLM
-@bot.command(name="chatglm")
-async def chatGLM_Primitive_start(msg: Message):
-    # 获取频道id
-    global channel_id, activity
-    activity = "chatglm"
-    channel_id = msg.ctx.channel.id
-    await msg.ctx.channel.send("已启用chatGLM_原始")
-
-
 # 启动chatglm_lora
-@bot.command(name="chatglm-l")
+@bot.command(name="chat")
 async def chatGLM_lora_start(msg: Message):
     # 获取频道id
-    global channel_id, activity
-    activity = "chatglm-l"
+    global channel_id
     channel_id = msg.ctx.channel.id
     await msg.ctx.channel.send("已启用chatGLM_微调")
-
-
-# 启用stable-diffusion
-@bot.command(name="stable-diffusion")
-async def stable_diffusion_start(msg: Message):
-    global channel_id, activity
-    activity = "stable-diffusion"
-    channel_id = msg.ctx.channel.id
-    await msg.ctx.channel.send("已启用stable-diffusion")
-
 
 # 关闭频道channel_id
 @bot.command(name="stop")
@@ -133,50 +92,34 @@ async def chat(msg: Message):
         # 启动定时器
         asyncio.create_task(timer(msg))
         time_activity = True
-    # 判断激活的是哪个模型
-    global last_access_time
-    last_access_time = datetime.datetime.now()
-    if activity == "chatglm":
-        # 获取回复
-        data = {"prompt": msg.content, "history": history}
-        reply = await chatGLM_Primitive(data)
-        # 存档history
-        history = reply[1]
-        # 发送回复
-        await msg.ctx.channel.send(reply[0])
+    #访问本地chatglm
+    message = msg.content
+    chat_model = chatgpt()
+    reply = await chat_model.send_message(message)
+    if reply[0] == "FAILED":
+        await msg.ctx.channel.send("AI出现错误，请重试")
         return
-    if activity == "stable-diffusion":
-        # 获取回复
-        data = {"prompt": msg.content, "history": []}
-        reply = await stable_diffusion(data)
-        if reply[1] == 502:
-            await msg.ctx.channel.send(reply[0])
-            return
-        # 还原为图片
-        img = base64.b64decode(reply[0])
-        # 把还原的图片放置在IO内存空间中
-        img = io.BytesIO(img)
-        img.seek(0)
+    # 判断是否为图片
+    if bool(reply[3]) is not False:
+        # 将base64转换为图片
+        image = base64.b64decode(reply[3][0].split(",")[-1])
+        # 将图片转换为io流
+        image = io.BytesIO(image)
         # 上传到开黑啦
-        img_url = await bot.client.create_asset(img)
+        img_url = await bot.client.create_asset(image)
         await msg.ctx.channel.send(img_url, type=MessageTypes.IMG)
         return
-    if activity == "moss":
-        # 获取回复
-        data = {"prompt": msg.content, "history": []}
-        # reply = await moss(data)
-        # 发送回复
-        await msg.ctx.channel.send("moss暂时不可用")
+    # 判断是否为语音
+    if bool(reply[2]) is not False:
+        await msg.ctx.channel.send('语音功能暂未开放')
         return
-    if activity == "chatglm-l":
-        # 获取回复
-        data = {"prompt": msg.content, "history": history}
-        reply = await chatglm_lora(data)
-        # 存档history
-        history = reply[1]
-        # 发送回复
-        await msg.ctx.channel.send(reply[0])
+    # 判断是否为文本
+    if bool(reply[1]) is not False:
+        await msg.ctx.channel.send(reply[1][0])
         return
+    return 
+
+
 
 
 # 运行bot
