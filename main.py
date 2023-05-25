@@ -103,12 +103,13 @@ async def chat(msg: Message):
     ch = await bot.client.fetch_public_channel(channel_id)
     if bool(reply[3]) is not False:
         # 将base64转换为图片
-        image = base64.b64decode(reply[3][0].split(",")[-1])
-        # 将图片转换为io流
-        image = io.BytesIO(image)
-        # 上传到开黑啦
-        img_url = await bot.client.create_asset(image)
-        await ch.send(img_url, type=MessageTypes.IMG)
+        for image in reply[3]:
+            image = base64.b64decode(image.split(",")[-1])
+            # 将图片转换为io流
+            image = io.BytesIO(image)
+            # 上传到开黑啦
+            img_url = await bot.client.create_asset(image)
+            await ch.send(img_url, type=MessageTypes.IMG)
     # 判断是否为语音
     if bool(reply[2]) is not False:
         await ch.send('语音功能暂未开放')
