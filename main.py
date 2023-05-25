@@ -100,6 +100,7 @@ async def chat(msg: Message):
         await msg.ctx.channel.send("AI出现错误，请重试")
         return
     # 判断是否为图片
+    ch = await bot.client.fetch_public_channel(channel_id)
     if bool(reply[3]) is not False:
         # 将base64转换为图片
         image = base64.b64decode(reply[3][0].split(",")[-1])
@@ -107,17 +108,13 @@ async def chat(msg: Message):
         image = io.BytesIO(image)
         # 上传到开黑啦
         img_url = await bot.client.create_asset(image)
-        await msg.ctx.channel.send(img_url, type=MessageTypes.IMG)
-        return
+        await ch.send(img_url, type=MessageTypes.IMG)
     # 判断是否为语音
     if bool(reply[2]) is not False:
-        await msg.ctx.channel.send('语音功能暂未开放')
-        return
+        await ch.send('语音功能暂未开放')
     # 判断是否为文本
     if bool(reply[1]) is not False:
-        await msg.ctx.channel.send(reply[1][0])
-        return
-    return 
+        await ch.send(reply[1][0])
 
 
 
