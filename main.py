@@ -136,10 +136,9 @@ async def chat(msg: Message):
         if not message.isdigit():
             await msg.ctx.channel.send("请输入数字")
             return
-        dice =  RandomNumberGenerator(message)
-        reply = await dice.generate()
+        dice =  RandomNumberGenerator().roll()
         ch = await bot.client.fetch_public_channel(channel_id)
-        await ch.send(f"你的数字是{reply}")
+        await ch.send(f"你的数字是{dice}")
         
 
 
