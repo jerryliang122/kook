@@ -3,6 +3,7 @@ import os
 from khl import Bot, Message, MessageTypes
 from khl.card import CardMessage, Card, Module, Element, Types, Struct
 from chatglm import chatgpt
+from dice import RandomNumberGenerator
 import io
 import asyncio
 import datetime
@@ -24,6 +25,7 @@ TIMEOUT = 5 * 60  # 5 分钟
 # 帮助示例
 helps = """
 使用/chat开始对话\n
+使用/dice开始掷骰子\n
 使用/stop删除AI在这个频道的活动\n
 注意AI 绘画只支持英文，且不支持中文字符\n
 """
@@ -64,9 +66,19 @@ async def help(msg: Message):
 @bot.command(name="chat")
 async def chatGLM_lora_start(msg: Message):
     # 获取频道id
-    global channel_id
+    global channel_id,activity
+    activity = 'chatGLM_lora'
     channel_id = msg.ctx.channel.id
     await msg.ctx.channel.send("已启用chatGLM_微调")
+
+# 启动dice
+@bot.command(name="dice")
+async def dice_start(msg: Message):
+    # 获取频道id
+    global channel_id,activity
+    activity = 'dice'
+    channel_id = msg.ctx.channel.id
+    await msg.ctx.channel.send("已启用dice")
 
 # 关闭频道channel_id
 @bot.command(name="stop")
@@ -92,31 +104,43 @@ async def chat(msg: Message):
         # 启动定时器
         asyncio.create_task(timer(msg))
         time_activity = True
-    #访问本地chatglm
-    message = msg.content
-    chat_model = chatgpt()
-    reply = await chat_model.send_message(message)
-    if reply[0] == "FAILED":
-        await msg.ctx.channel.send("AI出现错误，请重试")
-        return
-    # 判断是否为图片
-    ch = await bot.client.fetch_public_channel(channel_id)
-    if bool(reply[3]) is not False:
-        # 将base64转换为图片
-        for image in reply[3]:
-            image = base64.b64decode(image.split(",")[-1])
-            # 将图片转换为io流
-            image = io.BytesIO(image)
-            # 上传到开黑啦
-            img_url = await bot.client.create_asset(image)
-            await ch.send(img_url, type=MessageTypes.IMG)
-    # 判断是否为语音
-    if bool(reply[2]) is not False:
-        await ch.send('语音功能暂未开放')
-    # 判断是否为文本
-    if bool(reply[1]) is not False:
-        await ch.send(reply[1][0])
-
+    if activity == 'chatGLM_lora':
+        #访问本地chatglm
+        message = msg.content
+        chat_model = chatgpt()
+        reply = await chat_model.send_message(message)
+        if reply[0] == "FAILED":
+            await msg.ctx.channel.send("AI出现错误，请重试")
+            return
+        # 判断是否为图片
+        ch = await bot.client.fetch_public_channel(channel_id)
+        if bool(reply[3]) is not False:
+            # 将base64转换为图片
+            for image in reply[3]:
+                image = base64.b64decode(image.split(",")[-1])
+                # 将图片转换为io流
+                image = io.BytesIO(image)
+                # 上传到开黑啦
+                img_url = await bot.client.create_asset(image)
+                await ch.send(img_url, type=MessageTypes.IMG)
+        # 判断是否为语音
+        if bool(reply[2]) is not False:
+            await ch.send('语音功能暂未开放')
+        # 判断是否为文本
+        if bool(reply[1]) is not False:
+            await ch.send(reply[1][0])
+    if activity == 'dice':
+        # 访问dice
+        message = msg.content
+        # 判断是否为数字
+        if not message.isdigit():
+            await msg.ctx.channel.send("请输入数字")
+            return
+        dice =  RandomNumberGenerator(message)
+        reply = await dice.generate()
+        ch = await bot.client.fetch_public_channel(channel_id)
+        await ch.send(f"你的数字是{reply}")
+        
 
 
 
