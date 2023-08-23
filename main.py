@@ -98,7 +98,7 @@ async def chat(msg: Message):
     if msg.content.startswith("/"):
         return
     # 判断是否为启用chatGLM的频道
-    if not msg.ctx.channel.id == channel_id:
+    if msg.ctx.channel.id != channel_id:
         return
     if not time_activity:
         # 启动定时器
@@ -114,7 +114,7 @@ async def chat(msg: Message):
             return
         # 判断是否为图片
         ch = await bot.client.fetch_public_channel(channel_id)
-        if bool(reply[3]) is not False:
+        if bool(reply[3]):
             # 将base64转换为图片
             for image in reply[3]:
                 image = base64.b64decode(image.split(",")[-1])
@@ -124,10 +124,10 @@ async def chat(msg: Message):
                 img_url = await bot.client.create_asset(image)
                 await ch.send(img_url, type=MessageTypes.IMG)
         # 判断是否为语音
-        if bool(reply[2]) is not False:
+        if bool(reply[2]):
             await ch.send('语音功能暂未开放')
         # 判断是否为文本
-        if bool(reply[1]) is not False:
+        if bool(reply[1]):
             await ch.send(reply[1][0])
     if activity == 'dice':
         # 访问dice
